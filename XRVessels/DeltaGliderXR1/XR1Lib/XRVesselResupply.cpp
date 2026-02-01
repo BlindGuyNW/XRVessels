@@ -157,3 +157,75 @@ bool DeltaGliderXR1::RequestExternalCooling(const bool bEnableExternalCooling)
 
     return true;
 }
+
+// Request that the fuel resupply hatch be opened or closed.
+// Shows a success or failure message on the secondary HUD and plays a beep.
+// Returns: true on success, false on failure
+bool DeltaGliderXR1::RequestFuelHatch(const bool bOpen)
+{
+    // may open hatch only if landed OR if docked
+    const bool doorUnlocked = (IsLanded() || IsDocked());
+    if (doorUnlocked == false)
+    {
+        PlaySound(Error1, DeltaGliderXR1::ST_Other, ERROR1_VOL);
+        ShowWarning("Resupply Hatches Locked.wav", DeltaGliderXR1::ST_WarningCallout, "Resupply hatches locked while in flight.");
+        return false;
+    }
+
+    if (bOpen)
+    {
+        fuelhatch_status = DoorStatus::DOOR_OPEN;
+
+        // update animation if config allows
+        if (GetXR1Config()->EnableResupplyHatchAnimationsWhileDocked)
+            SetXRAnimation(anim_fuelhatch, 1.0);
+
+        PlaySound(SupplyHatch, DeltaGliderXR1::ST_Other, SUPPLY_HATCH_VOL);
+        ShowInfo("Fuel hatch open.wav", DeltaGliderXR1::ST_InformationCallout, "Fuel hatch open.");
+
+        TriggerRedrawArea(AID_FUELHATCHSWITCH);
+        TriggerRedrawArea(AID_FUELHATCHLED);
+    }
+    else
+    {
+        CloseFuelHatch(true);  // handles redraws internally
+    }
+
+    return true;
+}
+
+// Request that the LOX resupply hatch be opened or closed.
+// Shows a success or failure message on the secondary HUD and plays a beep.
+// Returns: true on success, false on failure
+bool DeltaGliderXR1::RequestLoxHatch(const bool bOpen)
+{
+    // may open hatch only if landed OR if docked
+    const bool doorUnlocked = (IsLanded() || IsDocked());
+    if (doorUnlocked == false)
+    {
+        PlaySound(Error1, DeltaGliderXR1::ST_Other, ERROR1_VOL);
+        ShowWarning("Resupply Hatches Locked.wav", DeltaGliderXR1::ST_WarningCallout, "Resupply hatches locked while in flight.");
+        return false;
+    }
+
+    if (bOpen)
+    {
+        loxhatch_status = DoorStatus::DOOR_OPEN;
+
+        // update animation if config allows
+        if (GetXR1Config()->EnableResupplyHatchAnimationsWhileDocked)
+            SetXRAnimation(anim_loxhatch, 1.0);
+
+        PlaySound(SupplyHatch, DeltaGliderXR1::ST_Other, SUPPLY_HATCH_VOL);
+        ShowInfo("Lox hatch open.wav", DeltaGliderXR1::ST_InformationCallout, "LOX hatch open.");
+
+        TriggerRedrawArea(AID_LOXHATCHSWITCH);
+        TriggerRedrawArea(AID_LOXHATCHLED);
+    }
+    else
+    {
+        CloseLoxHatch(true);  // handles redraws internally
+    }
+
+    return true;
+}

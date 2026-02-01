@@ -27,6 +27,7 @@
 // ==============================================================
 
 #include "DeltaGliderXR1.h"
+#include "AreaIDs.h"
 #include "XRPayloadBay.h"
 #include "XRPayloadBaySlot.h"
 
@@ -1275,6 +1276,159 @@ bool DeltaGliderXR1::SetCrossFeedMode(XRXFEED_STATE state)
 
     // NOTE: XFEED_STATE matches XFEED_MODE exactly -- do not change this!
     SetCrossfeedMode(static_cast<XFEED_MODE>(state), nullptr);
+    return true;
+}
+
+//=========================================================================
+//
+// API methods added in XRVesselCtrl version 5.0
+//
+
+// Returns the current state of the fuel resupply hatch.
+XRDoorState DeltaGliderXR1::GetFuelHatchState() const
+{
+    return ToXRDoorState(fuelhatch_status);
+}
+
+// Opens or closes the fuel resupply hatch.
+// Returns: true on success, false on error
+bool DeltaGliderXR1::SetFuelHatchState(const bool bOpen)
+{
+    // if crew is incapacitated, nothing to do here
+    if (IsCrewIncapacitatedOrNoPilotOnBoard())
+        return false;
+
+    return RequestFuelHatch(bOpen);
+}
+
+// Returns the current state of the LOX resupply hatch.
+XRDoorState DeltaGliderXR1::GetLoxHatchState() const
+{
+    return ToXRDoorState(loxhatch_status);
+}
+
+// Opens or closes the LOX resupply hatch.
+// Returns: true on success, false on error
+bool DeltaGliderXR1::SetLoxHatchState(const bool bOpen)
+{
+    // if crew is incapacitated, nothing to do here
+    if (IsCrewIncapacitatedOrNoPilotOnBoard())
+        return false;
+
+    return RequestLoxHatch(bOpen);
+}
+
+// Sets the state of an external supply line flow switch.
+//   id: identifies which supply line (main fuel, SCRAM fuel, APU fuel, or LOX)
+//   bOpen: true = open (start flow), false = close (stop flow)
+// Returns: true on success, false on error
+bool DeltaGliderXR1::SetExternalSupplyLineState(XRSupplyLineID id, const bool bOpen)
+{
+    // if crew is incapacitated, nothing to do here
+    if (IsCrewIncapacitatedOrNoPilotOnBoard())
+        return false;
+
+    bool *pFlowSwitch = nullptr;
+    bool *pPressureNominal = nullptr;
+    int aidSwitch = 0;
+    int aidSwitchLed = 0;
+
+    switch (id)
+    {
+    case XRSupplyLineID::XRS_MainFuel:
+        pFlowSwitch = &m_mainFuelFlowSwitch;
+        pPressureNominal = &m_mainSupplyLineStatus;
+        aidSwitch = AID_MAINSUPPLYLINE_SWITCH;
+        aidSwitchLed = AID_MAINSUPPLYLINE_SWITCH_LED;
+        break;
+
+    case XRSupplyLineID::XRS_ScramFuel:
+        pFlowSwitch = &m_scramFuelFlowSwitch;
+        pPressureNominal = &m_scramSupplyLineStatus;
+        aidSwitch = AID_SCRAMSUPPLYLINE_SWITCH;
+        aidSwitchLed = AID_SCRAMSUPPLYLINE_SWITCH_LED;
+        break;
+
+    case XRSupplyLineID::XRS_ApuFuel:
+        pFlowSwitch = &m_apuFuelFlowSwitch;
+        pPressureNominal = &m_apuSupplyLineStatus;
+        aidSwitch = AID_APUSUPPLYLINE_SWITCH;
+        aidSwitchLed = AID_APUSUPPLYLINE_SWITCH_LED;
+        break;
+
+    case XRSupplyLineID::XRS_Lox:
+        pFlowSwitch = &m_loxFlowSwitch;
+        pPressureNominal = &m_loxSupplyLineStatus;
+        aidSwitch = AID_LOXSUPPLYLINE_SWITCH;
+        aidSwitchLed = AID_LOXSUPPLYLINE_SWITCH_LED;
+        break;
+
+    default:
+        return false;   // invalid supply line ID
+    }
+
+    if (bOpen)
+    {
+        // cannot open the flow switch if external line pressure is not nominal
+        if (!(*pPressureNominal))
+        {
+            PlaySound(Error1, DeltaGliderXR1::ST_Other, ERROR1_VOL);
+            ShowWarning(nullptr, DeltaGliderXR1::ST_None, "No External Line Pressure.");
+            return false;
+        }
+    }
+
+    *pFlowSwitch = bOpen;
+
+    // play switch sound
+    PlaySound((bOpen ? SwitchOn : SwitchOff), DeltaGliderXR1::ST_Other);
+
+    TriggerRedrawArea(aidSwitch);
+    TriggerRedrawArea(aidSwitchLed);
+
+    return true;
+}
+
+// Retrieves the current status of an external supply line.
+//   id: identifies which supply line
+//   status: [out] populated with the supply line's current status
+// Returns: true on success, false if id is invalid
+bool DeltaGliderXR1::GetExternalSupplyLineStatus(XRSupplyLineID id, XRSupplyLineStatus &status) const
+{
+    switch (id)
+    {
+    case XRSupplyLineID::XRS_MainFuel:
+        status.FlowSwitch = m_mainFuelFlowSwitch;
+        status.PressureNominal = m_mainSupplyLineStatus;
+        status.PressurePSI = m_mainExtLinePressure;
+        status.NominalPressurePSI = m_nominalMainExtLinePressure;
+        break;
+
+    case XRSupplyLineID::XRS_ScramFuel:
+        status.FlowSwitch = m_scramFuelFlowSwitch;
+        status.PressureNominal = m_scramSupplyLineStatus;
+        status.PressurePSI = m_scramExtLinePressure;
+        status.NominalPressurePSI = m_nominalScramExtLinePressure;
+        break;
+
+    case XRSupplyLineID::XRS_ApuFuel:
+        status.FlowSwitch = m_apuFuelFlowSwitch;
+        status.PressureNominal = m_apuSupplyLineStatus;
+        status.PressurePSI = m_apuExtLinePressure;
+        status.NominalPressurePSI = m_nominalApuExtLinePressure;
+        break;
+
+    case XRSupplyLineID::XRS_Lox:
+        status.FlowSwitch = m_loxFlowSwitch;
+        status.PressureNominal = m_loxSupplyLineStatus;
+        status.PressurePSI = m_loxExtLinePressure;
+        status.NominalPressurePSI = m_nominalLoxExtLinePressure;
+        break;
+
+    default:
+        return false;   // invalid supply line ID
+    }
+
     return true;
 }
 

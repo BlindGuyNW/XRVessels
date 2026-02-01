@@ -22,8 +22,8 @@
 // ==============================================================
 // Public XR-Class Vessel Control Header File.
 // 
-// XRVesselControl Version: 4.0
-// Release Date: 15-Aug-2021
+// XRVesselControl Version: 5.0
+// Release Date: 31-Jan-2026
 //
 // Minimum XR vessel versions implementing this API version: XR1 2.0, XR2 2.0, XR5 2.0
 //
@@ -47,7 +47,7 @@ class XRVesselCtrl;
 
 // Use this floating point constant when implementing your ship's GetCtrlAPIVersion method; also, you should compare each vessel's API 
 // version against this version when you are writing interface code.
-#define THIS_XRVESSELCTRL_API_VERSION 4.0f
+#define THIS_XRVESSELCTRL_API_VERSION 5.0f
 
 /*
   Here is an example of how to use the XRVesselCtrl API:
@@ -313,6 +313,17 @@ bool XRVesselCtrlFlag = true;
 // added in XRVesselCtrl API version 3.0
 enum class XRXFEED_STATE { XRXF_MAIN, XRXF_OFF, XRXF_RCS };
 
+// added in XRVesselCtrl API version 5.0
+enum class XRSupplyLineID { XRS_MainFuel, XRS_ScramFuel, XRS_ApuFuel, XRS_Lox };
+
+struct XRSupplyLineStatus
+{
+    bool    FlowSwitch;          // true = supply line switch is ON (fuel/LOX flowing into tank)
+    bool    PressureNominal;     // true = external line pressure at nominal level (green light)
+    double  PressurePSI;         // current PSI in external supply line
+    double  NominalPressurePSI;  // target nominal PSI for this line
+};
+
 //=========================================================================
 // Each vessel that supports this API will extend this abstract 
 // base class.  This need not be limited to only XR-class vessels; it is up
@@ -528,6 +539,34 @@ public:
     virtual bool SetCrossFeedMode(XRXFEED_STATE state) = 0;
 
     //=====================================================================
+    // Methods added in API version 5.0
+    //=====================================================================
 
-    // TODO: add resupply / refueling support later as necessary
+    // Returns the current state of the fuel resupply hatch.
+    virtual XRDoorState GetFuelHatchState() const = 0;
+
+    // Opens or closes the fuel resupply hatch.
+    //   bOpen: true = open, false = close
+    // Returns: true on success, false on error (e.g., hatch locked while in flight, or crew incapacitated)
+    virtual bool SetFuelHatchState(const bool bOpen) = 0;
+
+    // Returns the current state of the LOX resupply hatch.
+    virtual XRDoorState GetLoxHatchState() const = 0;
+
+    // Opens or closes the LOX resupply hatch.
+    //   bOpen: true = open, false = close
+    // Returns: true on success, false on error (e.g., hatch locked while in flight, or crew incapacitated)
+    virtual bool SetLoxHatchState(const bool bOpen) = 0;
+
+    // Sets the state of an external supply line flow switch.
+    //   id: identifies which supply line (main fuel, SCRAM fuel, APU fuel, or LOX)
+    //   bOpen: true = open (start flow), false = close (stop flow)
+    // Returns: true on success, false on error (e.g., no external line pressure, crew incapacitated, or invalid id)
+    virtual bool SetExternalSupplyLineState(XRSupplyLineID id, const bool bOpen) = 0;
+
+    // Retrieves the current status of an external supply line.
+    //   id: identifies which supply line
+    //   status: [out] populated with the supply line's current status
+    // Returns: true on success, false if id is invalid
+    virtual bool GetExternalSupplyLineStatus(XRSupplyLineID id, XRSupplyLineStatus &status) const = 0;
 };

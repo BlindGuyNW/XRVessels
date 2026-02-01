@@ -700,6 +700,14 @@ public:
     virtual bool SetExternalCoolingState(const bool bEnabled);
     virtual bool SetCrossFeedMode(XRXFEED_STATE state);
 
+    // API methods added in XRVesselCtrl version 5.0
+    virtual XRDoorState GetFuelHatchState() const;
+    virtual bool SetFuelHatchState(const bool bOpen);
+    virtual XRDoorState GetLoxHatchState() const;
+    virtual bool SetLoxHatchState(const bool bOpen);
+    virtual bool SetExternalSupplyLineState(XRSupplyLineID id, const bool bOpen);
+    virtual bool GetExternalSupplyLineStatus(XRSupplyLineID id, XRSupplyLineStatus &status) const;
+
     //=====================================================================
 
     //
@@ -821,6 +829,8 @@ public:
     void SetFuelDumpState(bool &fuelDumpInProgress, const bool isDumping, const char *pFuelLabel);
     void SetLOXDumpState(const bool isDumping);
     bool RequestExternalCooling(const bool bEnableExternalCooling);
+    bool RequestFuelHatch(const bool bOpen);
+    bool RequestLoxHatch(const bool bOpen);
 	
 	bool MainThrustApplied() const
 	{
