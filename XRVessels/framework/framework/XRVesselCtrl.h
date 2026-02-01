@@ -22,7 +22,7 @@
 // ==============================================================
 // Public XR-Class Vessel Control Header File.
 // 
-// XRVesselControl Version: 5.0
+// XRVesselControl Version: 6.0
 // Release Date: 31-Jan-2026
 //
 // Minimum XR vessel versions implementing this API version: XR1 2.0, XR2 2.0, XR5 2.0
@@ -47,7 +47,7 @@ class XRVesselCtrl;
 
 // Use this floating point constant when implementing your ship's GetCtrlAPIVersion method; also, you should compare each vessel's API 
 // version against this version when you are writing interface code.
-#define THIS_XRVESSELCTRL_API_VERSION 5.0f
+#define THIS_XRVESSELCTRL_API_VERSION 6.0f
 
 /*
   Here is an example of how to use the XRVesselCtrl API:
@@ -324,6 +324,9 @@ struct XRSupplyLineStatus
     double  NominalPressurePSI;  // target nominal PSI for this line
 };
 
+// added in XRVesselCtrl API version 6.0
+enum class XRFuelDumpID { XRFD_MainFuel, XRFD_RcsFuel, XRFD_ScramFuel, XRFD_ApuFuel, XRFD_Lox };
+
 //=========================================================================
 // Each vessel that supports this API will extend this abstract 
 // base class.  This need not be limited to only XR-class vessels; it is up
@@ -569,4 +572,24 @@ public:
     //   status: [out] populated with the supply line's current status
     // Returns: true on success, false if id is invalid
     virtual bool GetExternalSupplyLineStatus(XRSupplyLineID id, XRSupplyLineStatus &status) const = 0;
+
+    //=====================================================================
+    // Methods added in API version 6.0
+    //=====================================================================
+
+    // Returns the current cross-feed mode.
+    virtual XRXFEED_STATE GetCrossFeedMode() const = 0;
+
+    // Starts or stops fuel dumping for the specified tank.
+    //   id: identifies which fuel/LOX tank to dump
+    //   bDumping: true = start dumping, false = stop dumping
+    // Returns: true on success, false on error (e.g., crew incapacitated, invalid id, or LOX consumption disabled for LOX tank)
+    // Note: unlike the panel button (which requires a 2.5-second hold), the API starts dumping immediately.
+    virtual bool SetFuelDumpState(XRFuelDumpID id, const bool bDumping) = 0;
+
+    // Returns the current fuel dump state for the specified tank.
+    //   id: identifies which fuel/LOX tank to query
+    //   bDumping: [out] set to true if the specified tank is currently dumping, false otherwise
+    // Returns: true on success, false if id is invalid
+    virtual bool GetFuelDumpState(XRFuelDumpID id, bool &bDumping) const = 0;
 };

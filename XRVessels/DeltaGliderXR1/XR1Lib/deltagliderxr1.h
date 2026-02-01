@@ -708,6 +708,11 @@ public:
     virtual bool SetExternalSupplyLineState(XRSupplyLineID id, const bool bOpen);
     virtual bool GetExternalSupplyLineStatus(XRSupplyLineID id, XRSupplyLineStatus &status) const;
 
+    // API methods added in XRVesselCtrl version 6.0
+    virtual XRXFEED_STATE GetCrossFeedMode() const;
+    virtual bool SetFuelDumpState(XRFuelDumpID id, const bool bDumping);
+    virtual bool GetFuelDumpState(XRFuelDumpID id, bool &bDumping) const;
+
     //=====================================================================
 
     //

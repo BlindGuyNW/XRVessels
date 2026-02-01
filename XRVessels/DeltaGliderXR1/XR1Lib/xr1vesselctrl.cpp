@@ -1433,3 +1433,97 @@ bool DeltaGliderXR1::GetExternalSupplyLineStatus(XRSupplyLineID id, XRSupplyLine
 }
 
 //=========================================================================
+//
+// API methods added in XRVesselCtrl version 6.0
+//
+
+// Returns the current cross-feed mode.
+XRXFEED_STATE DeltaGliderXR1::GetCrossFeedMode() const
+{
+    // NOTE: XRXFEED_STATE matches XFEED_MODE exactly -- do not change this!
+    return static_cast<XRXFEED_STATE>(m_xfeedMode);
+}
+
+// Starts or stops fuel dumping for the specified tank.
+// Unlike the panel button (which requires a 2.5-second hold), the API starts dumping immediately.
+// Returns: true on success, false on error
+bool DeltaGliderXR1::SetFuelDumpState(XRFuelDumpID id, const bool bDumping)
+{
+    // if crew is incapacitated, nothing to do here
+    if (IsCrewIncapacitatedOrNoPilotOnBoard())
+        return false;
+
+    switch (id)
+    {
+    case XRFuelDumpID::XRFD_MainFuel:
+        SetFuelDumpState(m_mainFuelDumpInProgress, bDumping, "Main");
+        TriggerRedrawArea(AID_MAIN_FUELDUMP_BUTTON);
+        break;
+
+    case XRFuelDumpID::XRFD_RcsFuel:
+        SetFuelDumpState(m_rcsFuelDumpInProgress, bDumping, "RCS");
+        TriggerRedrawArea(AID_RCS_FUELDUMP_BUTTON);
+        break;
+
+    case XRFuelDumpID::XRFD_ScramFuel:
+        SetFuelDumpState(m_scramFuelDumpInProgress, bDumping, "SCRAM");
+        TriggerRedrawArea(AID_SCRAM_FUELDUMP_BUTTON);
+        break;
+
+    case XRFuelDumpID::XRFD_ApuFuel:
+        SetFuelDumpState(m_apuFuelDumpInProgress, bDumping, "APU");
+        TriggerRedrawArea(AID_APU_FUELDUMP_BUTTON);
+        break;
+
+    case XRFuelDumpID::XRFD_Lox:
+        // if LOX consumption set to zero, cannot dump LOX
+        if (bDumping && GetXR1Config()->GetLOXConsumptionFraction() == 0.0)
+        {
+            ShowWarning("LOX Consumption Disabled.wav", DeltaGliderXR1::ST_WarningCallout, "Cannot dump LOX when&LOX consumption disabled.");
+            return false;
+        }
+        SetLOXDumpState(bDumping);
+        TriggerRedrawArea(AID_LOX_DUMP_BUTTON);
+        break;
+
+    default:
+        return false;   // invalid fuel dump ID
+    }
+
+    return true;
+}
+
+// Returns the current fuel dump state for the specified tank.
+// Returns: true on success, false if id is invalid
+bool DeltaGliderXR1::GetFuelDumpState(XRFuelDumpID id, bool &bDumping) const
+{
+    switch (id)
+    {
+    case XRFuelDumpID::XRFD_MainFuel:
+        bDumping = m_mainFuelDumpInProgress;
+        break;
+
+    case XRFuelDumpID::XRFD_RcsFuel:
+        bDumping = m_rcsFuelDumpInProgress;
+        break;
+
+    case XRFuelDumpID::XRFD_ScramFuel:
+        bDumping = m_scramFuelDumpInProgress;
+        break;
+
+    case XRFuelDumpID::XRFD_ApuFuel:
+        bDumping = m_apuFuelDumpInProgress;
+        break;
+
+    case XRFuelDumpID::XRFD_Lox:
+        bDumping = m_loxDumpInProgress;
+        break;
+
+    default:
+        return false;   // invalid fuel dump ID
+    }
+
+    return true;
+}
+
+//=========================================================================
