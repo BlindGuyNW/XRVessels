@@ -1281,7 +1281,7 @@ bool DeltaGliderXR1::SetCrossFeedMode(XRXFEED_STATE state)
 
 //=========================================================================
 //
-// API methods added in XRVesselCtrl version 5.0
+// API methods added in XRVesselCtrl version 4.1
 //
 
 // Returns the current state of the fuel resupply hatch.
@@ -1431,11 +1431,6 @@ bool DeltaGliderXR1::GetExternalSupplyLineStatus(XRSupplyLineID id, XRSupplyLine
 
     return true;
 }
-
-//=========================================================================
-//
-// API methods added in XRVesselCtrl version 6.0
-//
 
 // Returns the current cross-feed mode.
 XRXFEED_STATE DeltaGliderXR1::GetCrossFeedMode() const

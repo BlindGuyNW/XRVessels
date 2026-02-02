@@ -22,7 +22,7 @@
 // ==============================================================
 // Public XR-Class Vessel Control Header File.
 // 
-// XRVesselControl Version: 6.0
+// XRVesselControl Version: 4.1
 // Release Date: 31-Jan-2026
 //
 // Minimum XR vessel versions implementing this API version: XR1 2.0, XR2 2.0, XR5 2.0
@@ -47,7 +47,7 @@ class XRVesselCtrl;
 
 // Use this floating point constant when implementing your ship's GetCtrlAPIVersion method; also, you should compare each vessel's API 
 // version against this version when you are writing interface code.
-#define THIS_XRVESSELCTRL_API_VERSION 6.0f
+#define THIS_XRVESSELCTRL_API_VERSION 4.1f
 
 /*
   Here is an example of how to use the XRVesselCtrl API:
@@ -313,7 +313,7 @@ bool XRVesselCtrlFlag = true;
 // added in XRVesselCtrl API version 3.0
 enum class XRXFEED_STATE { XRXF_MAIN, XRXF_OFF, XRXF_RCS };
 
-// added in XRVesselCtrl API version 5.0
+// added in XRVesselCtrl API version 4.1
 enum class XRSupplyLineID { XRS_MainFuel, XRS_ScramFuel, XRS_ApuFuel, XRS_Lox };
 
 struct XRSupplyLineStatus
@@ -324,7 +324,7 @@ struct XRSupplyLineStatus
     double  NominalPressurePSI;  // target nominal PSI for this line
 };
 
-// added in XRVesselCtrl API version 6.0
+// added in XRVesselCtrl API version 4.1
 enum class XRFuelDumpID { XRFD_MainFuel, XRFD_RcsFuel, XRFD_ScramFuel, XRFD_ApuFuel, XRFD_Lox };
 
 //=========================================================================
@@ -542,7 +542,7 @@ public:
     virtual bool SetCrossFeedMode(XRXFEED_STATE state) = 0;
 
     //=====================================================================
-    // Methods added in API version 5.0
+    // Methods added in API version 4.1
     //=====================================================================
 
     // Returns the current state of the fuel resupply hatch.
@@ -572,10 +572,6 @@ public:
     //   status: [out] populated with the supply line's current status
     // Returns: true on success, false if id is invalid
     virtual bool GetExternalSupplyLineStatus(XRSupplyLineID id, XRSupplyLineStatus &status) const = 0;
-
-    //=====================================================================
-    // Methods added in API version 6.0
-    //=====================================================================
 
     // Returns the current cross-feed mode.
     virtual XRXFEED_STATE GetCrossFeedMode() const = 0;
